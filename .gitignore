@@ -1,0 +1,19 @@
+# Frontend
+frontend/node_modules/
+frontend/build/
+frontend/.env.local
+
+# Backend
+backend/build/
+backend/.gradle/
+backend/out/
+*.class
+
+# IDE
+.idea/
+*.iml
+.vscode/
+
+# OS
+.DS_Store
+Thumbs.db

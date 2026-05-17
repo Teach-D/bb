@@ -1,0 +1,1 @@
+- [Frontend Project Structure](project-frontend-structure.md) — API/컴포넌트 구조, 스타일 규칙, 수정 금지 파일 목록

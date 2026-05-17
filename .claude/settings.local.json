@@ -1,0 +1,21 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(Remove-Item *)",
+      "Bash(npx tsc *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Agent",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "powershell -ExecutionPolicy Bypass -File \".claude\\hooks\\check-build.ps1\""
+          }
+        ]
+      }
+    ]
+  }
+}

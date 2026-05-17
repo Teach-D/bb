@@ -1,0 +1,15 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: nubilab-postgres
+    environment:
+      POSTGRES_DB: nubilab
+      POSTGRES_USER: nubilab
+      POSTGRES_PASSWORD: nubilab1234
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:

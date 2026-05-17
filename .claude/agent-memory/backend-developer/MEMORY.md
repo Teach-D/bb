@@ -1,0 +1,1 @@
+- [Project Architecture](project_architecture.md) — FoodLog 도메인 현재 구현 상태 및 핵심 패턴 (Enum, 페이징, DB 집계 쿼리)

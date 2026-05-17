@@ -1,0 +1,1 @@
+- [반복 발견 이슈 패턴](project-recurring-issues.md) — @Valid 누락, findAll() 무제한 조회, refreshTrigger 전파 누락 등 nubilab-skeleton 반복 이슈
