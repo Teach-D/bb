@@ -18,10 +18,30 @@ interface FoodLogRepository : JpaRepository<FoodLog, Long> {
     @Query("SELECT COALESCE(SUM(f.calories), 0) FROM FoodLog f")
     fun sumAllCalories(): Long
 
+    @Query("SELECT COALESCE(SUM(f.carbohydrate), 0) FROM FoodLog f")
+    fun sumAllCarbohydrate(): Double
+
+    @Query("SELECT COALESCE(SUM(f.protein), 0) FROM FoodLog f")
+    fun sumAllProtein(): Double
+
+    @Query("SELECT COALESCE(SUM(f.fat), 0) FROM FoodLog f")
+    fun sumAllFat(): Double
+
     fun findByLoggedAtBetween(start: LocalDateTime, end: LocalDateTime, pageable: Pageable): Page<FoodLog>
+
+    fun findByLoggedAtBetween(start: LocalDateTime, end: LocalDateTime): List<FoodLog>
 
     @Query("SELECT COALESCE(SUM(f.calories), 0) FROM FoodLog f WHERE f.loggedAt >= :start AND f.loggedAt < :end")
     fun sumCaloriesBetween(@Param("start") start: LocalDateTime, @Param("end") end: LocalDateTime): Long
+
+    @Query("SELECT COALESCE(SUM(f.carbohydrate), 0) FROM FoodLog f WHERE f.loggedAt >= :start AND f.loggedAt < :end")
+    fun sumCarbohydrateBetween(@Param("start") start: LocalDateTime, @Param("end") end: LocalDateTime): Double
+
+    @Query("SELECT COALESCE(SUM(f.protein), 0) FROM FoodLog f WHERE f.loggedAt >= :start AND f.loggedAt < :end")
+    fun sumProteinBetween(@Param("start") start: LocalDateTime, @Param("end") end: LocalDateTime): Double
+
+    @Query("SELECT COALESCE(SUM(f.fat), 0) FROM FoodLog f WHERE f.loggedAt >= :start AND f.loggedAt < :end")
+    fun sumFatBetween(@Param("start") start: LocalDateTime, @Param("end") end: LocalDateTime): Double
 
     @Query("SELECT DISTINCT f.foodName FROM FoodLog f WHERE LOWER(f.foodName) LIKE LOWER(CONCAT('%', :keyword, '%')) ORDER BY f.foodName")
     fun findDistinctFoodNamesByKeyword(@Param("keyword") keyword: String, pageable: Pageable): List<String>

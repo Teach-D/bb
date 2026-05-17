@@ -12,6 +12,7 @@
 - [기능 2. 식사 유형별 칼로리 통계 조회](#기능-2-식사-유형별-칼로리-통계-조회)
 - [기능 3. 목표 칼로리 설정](#기능-3-목표-칼로리-설정)
 - [기능 4. 오늘 목표 칼로리 달성률 조회](#기능-4-오늘-목표-칼로리-달성률-조회)
+- [기능 5. 영양소 기록 (탄단지)](#기능-5-영양소-기록-탄단지)
 
 ---
 
@@ -282,6 +283,173 @@ Path Parameter, Query Parameter, Request Body 없음
 
 #### 에러 응답
 
+---
+
+## 기능 5. 영양소 기록 (탄단지)
+
+칼로리 외에 탄수화물·단백질·지방을 함께 기록하고 조회한다.  
+기존 `/api/food-logs` POST·GET 엔드포인트를 확장하며, 새 필드가 추가됨에 따라 Request DTO 유효성 검증과 Response DTO가 변경된다.
+
+---
+
+### 5-1. 음식 기록 추가 (영양소 포함)
+
+| 항목 | 내용 |
+|------|------|
+| **메서드** | `POST` |
+| **경로** | `/api/food-logs` |
+| **인증** | 필요 없음 |
+| **설명** | 음식 이름·식사 유형·칼로리와 함께 탄수화물·단백질·지방을 기록한다 |
+
+#### Request Body
+
+| 필드 | 타입 | 필수 | 제약 조건 | 설명 |
+|------|------|------|-----------|------|
+| `foodName` | `String` | Y | 1 ~ 100자 | 음식 이름 |
+| `calories` | `Int` | Y | 0 이상 | 칼로리 (kcal) |
+| `mealType` | `String` | Y | `BREAKFAST` \| `LUNCH` \| `DINNER` \| `SNACK` | 식사 유형 |
+| `carbohydrate` | `Double` | Y | 0.0 이상 | 탄수화물 (g) |
+| `protein` | `Double` | Y | 0.0 이상 | 단백질 (g) |
+| `fat` | `Double` | Y | 0.0 이상 | 지방 (g) |
+
+```json
+{
+  "foodName": "비빔밥",
+  "calories": 550,
+  "mealType": "LUNCH",
+  "carbohydrate": 80.5,
+  "protein": 18.0,
+  "fat": 12.3
+}
+```
+
+#### Response
+
+##### 성공 응답 — `201 Created`
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `id` | `Long` | 생성된 기록의 고유 ID |
+| `foodName` | `String` | 음식 이름 |
+| `calories` | `Int` | 칼로리 (kcal) |
+| `mealType` | `String` | 식사 유형 |
+| `carbohydrate` | `Double` | 탄수화물 (g) |
+| `protein` | `Double` | 단백질 (g) |
+| `fat` | `Double` | 지방 (g) |
+| `loggedAt` | `String (ISO 8601)` | 서버 저장 시각 (자동 설정) |
+
+```json
+{
+  "id": 3,
+  "foodName": "비빔밥",
+  "calories": 550,
+  "mealType": "LUNCH",
+  "carbohydrate": 80.5,
+  "protein": 18.0,
+  "fat": 12.3,
+  "loggedAt": "2026-05-18T12:30:00"
+}
+```
+
+##### 에러 응답
+
+| 상태 코드 | 발생 조건 |
+|-----------|-----------|
+| `400 Bad Request` | 필수 필드 누락, 타입 불일치, 유효성 검증 실패 |
+| `500 Internal Server Error` | DB 저장 실패 등 서버 오류 |
+
+유효성 검증 실패 예시 (`400 Bad Request`):
+
+```json
+{
+  "status": 400,
+  "errors": [
+    { "field": "carbohydrate", "message": "탄수화물은 0 이상이어야 합니다" },
+    { "field": "foodName",     "message": "음식 이름은 필수입니다" }
+  ]
+}
+```
+
+---
+
+### 5-2. 음식 기록 목록 조회 (영양소 포함)
+
+| 항목 | 내용 |
+|------|------|
+| **메서드** | `GET` |
+| **경로** | `/api/food-logs` |
+| **인증** | 필요 없음 |
+| **설명** | 저장된 음식 기록 전체 목록과 칼로리·탄수화물·단백질·지방의 합산값을 반환한다 |
+
+#### Request
+
+Path Parameter, Query Parameter, Request Body 없음
+
+#### Response
+
+##### 성공 응답 — `200 OK`
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `logs` | `FoodLogResponse[]` | 음식 기록 배열 |
+| `logs[].id` | `Long` | 기록 고유 ID |
+| `logs[].foodName` | `String` | 음식 이름 |
+| `logs[].calories` | `Int` | 칼로리 (kcal) |
+| `logs[].mealType` | `String` | 식사 유형 |
+| `logs[].carbohydrate` | `Double` | 탄수화물 (g) |
+| `logs[].protein` | `Double` | 단백질 (g) |
+| `logs[].fat` | `Double` | 지방 (g) |
+| `logs[].loggedAt` | `String (ISO 8601)` | 기록 시각 |
+| `totalCalories` | `Int` | 전체 기록의 칼로리 합산 |
+| `totalCarbohydrate` | `Double` | 전체 기록의 탄수화물 합산 (g) |
+| `totalProtein` | `Double` | 전체 기록의 단백질 합산 (g) |
+| `totalFat` | `Double` | 전체 기록의 지방 합산 (g) |
+
+```json
+{
+  "logs": [
+    {
+      "id": 1,
+      "foodName": "오트밀",
+      "calories": 350,
+      "mealType": "BREAKFAST",
+      "carbohydrate": 60.0,
+      "protein": 12.0,
+      "fat": 6.5,
+      "loggedAt": "2026-05-18T08:00:00"
+    },
+    {
+      "id": 2,
+      "foodName": "비빔밥",
+      "calories": 550,
+      "mealType": "LUNCH",
+      "carbohydrate": 80.5,
+      "protein": 18.0,
+      "fat": 12.3,
+      "loggedAt": "2026-05-18T12:30:00"
+    }
+  ],
+  "totalCalories": 900,
+  "totalCarbohydrate": 140.5,
+  "totalProtein": 30.0,
+  "totalFat": 18.8
+}
+```
+
+기록이 없는 경우:
+
+```json
+{
+  "logs": [],
+  "totalCalories": 0,
+  "totalCarbohydrate": 0.0,
+  "totalProtein": 0.0,
+  "totalFat": 0.0
+}
+```
+
+##### 에러 응답
+
 | 상태 코드 | 발생 조건 |
 |-----------|-----------|
 | `500 Internal Server Error` | DB 조회 실패 등 서버 오류 |
@@ -305,6 +473,13 @@ Path Parameter, Query Parameter, Request Body 없음
 - **오늘 날짜 기준**: `LocalDate.now()` 기준 — 서버 타임존 의존. 필요 시 클라이언트 날짜를 Query Parameter로 받는 확장 고려
 - **consumedCalories 계산**: `food_logs.logged_at`을 오늘 날짜(`00:00:00 ~ 23:59:59`)로 범위 필터 후 `calories` 합산
 - **에러 응답 형식**: `GlobalExceptionHandler`에서 `{"error": "message"}` 구조로 반환 (`MethodArgumentNotValidException` → 400, 기타 → 500)
+
+**기능 5**
+- **기존 엔드포인트 확장**: POST/GET 모두 같은 경로(`/api/food-logs`)를 유지하며 새 필드를 추가하는 방식 — 하위 호환이 필요하면 `carbohydrate`/`protein`/`fat` 을 optional(nullable)로 처리하고 null 시 0.0으로 합산 처리 가능
+- **유효성 검증 구현**: `@NotNull`, `@Min(0)` 또는 `@DecimalMin("0.0")` 어노테이션을 Request DTO 필드에 적용; `@Valid` + `MethodArgumentNotValidException` 핸들러로 400 응답 포맷 통일 필요
+- **소수점 정밀도**: `Double` 사용 시 부동소수점 오차 발생 가능 — 정밀도가 중요하다면 DB 컬럼 타입을 `NUMERIC(6,1)`, Kotlin 필드는 `Double` 유지하고 응답 시 소수점 1자리 반올림 권장
+- **합산 필드 타입**: `totalCarbohydrate` 등은 `Double`로 반환; Kotlin `sumOf { it.carbohydrate }` 로 계산 가능
+- **DB 스키마 변경**: 기존 `food_log` 테이블에 `carbohydrate NUMERIC(6,1) NOT NULL DEFAULT 0`, `protein NUMERIC(6,1) NOT NULL DEFAULT 0`, `fat NUMERIC(6,1) NOT NULL DEFAULT 0` 컬럼 추가 필요 (기존 데이터 마이그레이션 고려)
 
 ---
 

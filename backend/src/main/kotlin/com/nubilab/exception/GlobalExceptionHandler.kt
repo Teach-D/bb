@@ -5,6 +5,9 @@ import org.springframework.web.bind.MethodArgumentNotValidException
 import org.springframework.web.bind.annotation.ExceptionHandler
 import org.springframework.web.bind.annotation.RestControllerAdvice
 
+data class FieldError(val field: String, val message: String)
+data class ValidationErrorResponse(val status: Int, val errors: List<FieldError>)
+
 @RestControllerAdvice
 class GlobalExceptionHandler {
 
@@ -19,9 +22,13 @@ class GlobalExceptionHandler {
     }
 
     @ExceptionHandler(MethodArgumentNotValidException::class)
-    fun handleValidation(e: MethodArgumentNotValidException): ResponseEntity<Map<String, String>> {
-        val message = e.bindingResult.fieldErrors
-            .firstOrNull()?.defaultMessage ?: "잘못된 요청입니다."
-        return ResponseEntity.status(400).body(mapOf("error" to message))
+    fun handleValidation(e: MethodArgumentNotValidException): ResponseEntity<ValidationErrorResponse> {
+        val errors = e.bindingResult.fieldErrors.map { fieldError ->
+            FieldError(
+                field = fieldError.field,
+                message = fieldError.defaultMessage ?: "잘못된 값입니다.",
+            )
+        }
+        return ResponseEntity.status(400).body(ValidationErrorResponse(status = 400, errors = errors))
     }
 }

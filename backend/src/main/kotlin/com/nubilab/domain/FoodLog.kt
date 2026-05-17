@@ -36,6 +36,15 @@ class FoodLog(
     var mealType: MealType,
 
     @Column(nullable = false)
+    var carbohydrate: Double,
+
+    @Column(nullable = false)
+    var protein: Double,
+
+    @Column(nullable = false)
+    var fat: Double,
+
+    @Column(nullable = false)
     val loggedAt: LocalDateTime = LocalDateTime.now(),
 
     @Column(nullable = true)
