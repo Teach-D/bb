@@ -10,6 +10,8 @@
 
 - [기능 1. 오늘의 식단 목록 조회](#기능-1-오늘의-식단-목록-조회)
 - [기능 2. 식사 유형별 칼로리 통계 조회](#기능-2-식사-유형별-칼로리-통계-조회)
+- [기능 3. 목표 칼로리 설정](#기능-3-목표-칼로리-설정)
+- [기능 4. 오늘 목표 칼로리 달성률 조회](#기능-4-오늘-목표-칼로리-달성률-조회)
 
 ---
 
@@ -157,6 +159,135 @@ Path Parameter, Query Parameter, Request Body 없음
 
 ---
 
+---
+
+## 기능 3. 목표 칼로리 설정
+
+| 항목 | 내용 |
+|------|------|
+| **메서드** | `POST` |
+| **경로** | `/api/calorie-goals` |
+| **인증** | 필요 없음 |
+| **설명** | 오늘 날짜 기준으로 하루 목표 칼로리를 설정한다. 같은 날짜에 이미 목표가 존재하면 덮어쓴다(upsert). |
+
+### Request
+
+#### Request Body
+
+Content-Type: `application/json`
+
+| 필드 | 타입 | 필수 | 설명 |
+|------|------|------|------|
+| `targetCalories` | `Int` | ✅ | 목표 칼로리 (kcal, 양수) |
+
+```json
+{
+  "targetCalories": 2000
+}
+```
+
+### Response
+
+#### 성공 응답 — `201 Created`
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `id` | `Long` | 생성된 목표 칼로리 레코드 ID |
+| `targetCalories` | `Int` | 설정된 목표 칼로리 (kcal) |
+| `date` | `String (ISO 8601 date)` | 목표 날짜 (서버 저장 시점의 오늘 날짜 자동 설정) |
+
+```json
+{
+  "id": 1,
+  "targetCalories": 2000,
+  "date": "2026-05-18"
+}
+```
+
+#### 에러 응답
+
+| 상태 코드 | 발생 조건 | 응답 예시 |
+|-----------|-----------|-----------|
+| `400 Bad Request` | `targetCalories` 누락 또는 0 이하 | `{"error": "targetCalories must be positive"}` |
+| `500 Internal Server Error` | DB 저장 실패 등 서버 오류 | `{"error": "Internal Server Error"}` |
+
+---
+
+## 기능 4. 오늘 목표 칼로리 달성률 조회
+
+| 항목 | 내용 |
+|------|------|
+| **메서드** | `GET` |
+| **경로** | `/api/calorie-goals/today` |
+| **인증** | 필요 없음 |
+| **설명** | 오늘의 목표 칼로리와 `food_logs`에서 집계한 오늘 섭취 칼로리를 비교하여 달성률과 초과 여부를 반환한다. `calorie_goals`와 `food_logs` 두 테이블 간 연산이 포함된다. |
+
+### Request
+
+Path Parameter, Query Parameter, Request Body 없음
+
+### Response
+
+#### 성공 응답 — `200 OK` (목표 설정된 경우)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `targetCalories` | `Int` | 오늘의 목표 칼로리 (kcal) |
+| `consumedCalories` | `Int` | 오늘 섭취한 칼로리 합산 (`food_logs.logged_at` 기준 오늘 날짜 필터) |
+| `achievementRate` | `Double` | 달성률 (%) = `consumedCalories / targetCalories * 100`, 소수점 1자리 |
+| `exceeded` | `Boolean` | 목표 초과 여부 (`consumedCalories > targetCalories` 이면 `true`) |
+| `warningMessage` | `String` | 목표 초과 시 경고 메시지, 미초과 시 `null` |
+
+```json
+{
+  "targetCalories": 2000,
+  "consumedCalories": 2400,
+  "achievementRate": 120.0,
+  "exceeded": true,
+  "warningMessage": "오늘 목표 칼로리를 초과했습니다! 400kcal 초과"
+}
+```
+
+미초과 예시:
+
+```json
+{
+  "targetCalories": 2000,
+  "consumedCalories": 1500,
+  "achievementRate": 75.0,
+  "exceeded": false,
+  "warningMessage": null
+}
+```
+
+#### 성공 응답 — `200 OK` (목표 미설정 시)
+
+| 필드 | 타입 | 설명 |
+|------|------|------|
+| `targetCalories` | `null` | 오늘 목표 칼로리 미설정 |
+| `consumedCalories` | `Int` | 오늘 섭취한 칼로리 합산 (목표 없어도 계산) |
+| `achievementRate` | `null` | 목표 없으므로 달성률 계산 불가 |
+| `exceeded` | `Boolean` | `false` 고정 (목표 없음) |
+| `warningMessage` | `String` | 목표 미설정 안내 메시지 |
+
+```json
+{
+  "targetCalories": null,
+  "consumedCalories": 1200,
+  "achievementRate": null,
+  "exceeded": false,
+  "warningMessage": "오늘의 목표 칼로리가 설정되지 않았습니다."
+}
+```
+
+#### 에러 응답
+
+| 상태 코드 | 발생 조건 |
+|-----------|-----------|
+| `500 Internal Server Error` | DB 조회 실패 등 서버 오류 |
+
+---
+
 ## 추론 항목
 
 > 코드에서 명시적으로 확인되지 않아 관례·요구사항으로 추론한 항목입니다. 실제 구현 시 확인 후 수정하세요.
@@ -169,7 +300,11 @@ Path Parameter, Query Parameter, Request Body 없음
 - **미구현 엔드포인트**: `GET /api/food-logs/stats` 는 현재 코드에 없음 — 요구사항 기반 설계
 - **ratio 계산식**: `(mealType 칼로리 합계 / 2000) * 100`, 소수점 1자리 반올림
 - **stats 배열 순서**: `BREAKFAST → LUNCH → DINNER → SNACK` 고정 순서 권장
-- **에러 응답 형식**: `GlobalExceptionHandler` 미존재 — Spring Boot 기본 에러 응답 형식 가정
+**기능 3, 4**
+- **upsert 구현 방식**: 같은 날짜 목표 덮어쓰기는 `findByDate()` 후 존재하면 update, 없으면 insert로 구현 권장
+- **오늘 날짜 기준**: `LocalDate.now()` 기준 — 서버 타임존 의존. 필요 시 클라이언트 날짜를 Query Parameter로 받는 확장 고려
+- **consumedCalories 계산**: `food_logs.logged_at`을 오늘 날짜(`00:00:00 ~ 23:59:59`)로 범위 필터 후 `calories` 합산
+- **에러 응답 형식**: `GlobalExceptionHandler`에서 `{"error": "message"}` 구조로 반환 (`MethodArgumentNotValidException` → 400, 기타 → 500)
 
 ---
 
