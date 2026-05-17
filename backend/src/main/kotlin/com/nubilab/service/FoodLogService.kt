@@ -117,5 +117,6 @@ class FoodLogService(
         calories = calories,
         mealType = mealType.name,
         loggedAt = loggedAt,
+        favoriteFoodId = favoriteFoodId,
     )
 }

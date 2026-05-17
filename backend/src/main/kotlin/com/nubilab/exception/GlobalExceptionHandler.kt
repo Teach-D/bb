@@ -13,6 +13,11 @@ class GlobalExceptionHandler {
         return ResponseEntity.status(404).body(mapOf("error" to (e.message ?: "Not Found")))
     }
 
+    @ExceptionHandler(FavoriteFoodNotFoundException::class)
+    fun handleFavoriteFoodNotFound(e: FavoriteFoodNotFoundException): ResponseEntity<Map<String, String>> {
+        return ResponseEntity.status(404).body(mapOf("error" to (e.message ?: "Not Found")))
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException::class)
     fun handleValidation(e: MethodArgumentNotValidException): ResponseEntity<Map<String, String>> {
         val message = e.bindingResult.fieldErrors

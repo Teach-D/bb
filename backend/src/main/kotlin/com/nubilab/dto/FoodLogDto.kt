@@ -34,6 +34,7 @@ data class FoodLogResponse(
     val calories: Int,
     val mealType: String,
     val loggedAt: LocalDateTime,
+    val favoriteFoodId: Long? = null,
 )
 
 data class FoodLogListResponse(
