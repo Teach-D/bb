@@ -3,20 +3,29 @@ import apiClient from "./client";
 export interface FoodLogRequest {
   foodName: string;
   calories: number;
-  mealType: string;
+  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
+  carbohydrate: number;
+  protein: number;
+  fat: number;
 }
 
 export interface FoodLogResponse {
   id: number;
   foodName: string;
   calories: number;
-  mealType: string;
+  mealType: 'BREAKFAST' | 'LUNCH' | 'DINNER' | 'SNACK';
+  carbohydrate: number;
+  protein: number;
+  fat: number;
   loggedAt: string;
 }
 
 export interface FoodLogListResponse {
   logs: FoodLogResponse[];
   totalCalories: number;
+  totalCarbohydrate: number;
+  totalProtein: number;
+  totalFat: number;
   page: number;
   size: number;
   totalElements: number;
