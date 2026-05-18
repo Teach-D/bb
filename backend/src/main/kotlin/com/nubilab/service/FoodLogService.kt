@@ -31,6 +31,9 @@ class FoodLogService(
             foodName = request.foodName,
             calories = request.calories,
             mealType = request.mealType,
+            carbohydrate = request.carbohydrate,
+            protein = request.protein,
+            fat = request.fat,
         )
         return foodLogRepository.save(foodLog).toResponse()
     }
@@ -41,24 +44,33 @@ class FoodLogService(
      */
     @Transactional(readOnly = true)
     fun getFoodLogs(pageable: Pageable, date: LocalDate?): FoodLogListResponse {
-        val (page, totalCalories) = if (date == null) {
-            val p = foodLogRepository.findAll(pageable)
-            val cal = foodLogRepository.sumAllCalories().toInt()
-            Pair(p, cal)
+        return if (date == null) {
+            val page = foodLogRepository.findAll(pageable)
+            FoodLogListResponse(
+                logs = page.content.map { it.toResponse() },
+                totalCalories = foodLogRepository.sumAllCalories().toInt(),
+                totalCarbohydrate = foodLogRepository.sumAllCarbohydrate(),
+                totalProtein = foodLogRepository.sumAllProtein(),
+                totalFat = foodLogRepository.sumAllFat(),
+                page = pageable.pageNumber,
+                size = pageable.pageSize,
+                totalElements = page.totalElements,
+            )
         } else {
             val start = date.atStartOfDay()
             val end = date.plusDays(1).atStartOfDay()
-            val p = foodLogRepository.findByLoggedAtBetween(start, end, pageable)
-            val cal = foodLogRepository.sumCaloriesBetween(start, end).toInt()
-            Pair(p, cal)
+            val page = foodLogRepository.findByLoggedAtBetween(start, end, pageable)
+            FoodLogListResponse(
+                logs = page.content.map { it.toResponse() },
+                totalCalories = foodLogRepository.sumCaloriesBetween(start, end).toInt(),
+                totalCarbohydrate = foodLogRepository.sumCarbohydrateBetween(start, end),
+                totalProtein = foodLogRepository.sumProteinBetween(start, end),
+                totalFat = foodLogRepository.sumFatBetween(start, end),
+                page = pageable.pageNumber,
+                size = pageable.pageSize,
+                totalElements = page.totalElements,
+            )
         }
-        return FoodLogListResponse(
-            logs = page.content.map { it.toResponse() },
-            totalCalories = totalCalories,
-            page = pageable.pageNumber,
-            size = pageable.pageSize,
-            totalElements = page.totalElements,
-        )
     }
 
     /**
@@ -116,6 +128,9 @@ class FoodLogService(
         foodName = foodName,
         calories = calories,
         mealType = mealType.name,
+        carbohydrate = carbohydrate,
+        protein = protein,
+        fat = fat,
         loggedAt = loggedAt,
         favoriteFoodId = favoriteFoodId,
     )

@@ -61,12 +61,24 @@ const FoodLogList: React.FC<Props> = ({ refreshTrigger }) => {
           </button>
         )}
       </div>
-      <p>
-        <strong>
-          {selectedDate ? `${selectedDate} 칼로리: ` : "총 칼로리: "}
+      <div style={summaryContainer}>
+        <span>
+          <strong>{selectedDate ? `${selectedDate} 칼로리: ` : "총 칼로리: "}</strong>
           {data.totalCalories} kcal
-        </strong>
-      </p>
+        </span>
+        <span>
+          <strong>탄수화물: </strong>
+          {data.totalCarbohydrate.toFixed(1)} g
+        </span>
+        <span>
+          <strong>단백질: </strong>
+          {data.totalProtein.toFixed(1)} g
+        </span>
+        <span>
+          <strong>지방: </strong>
+          {data.totalFat.toFixed(1)} g
+        </span>
+      </div>
       {data.logs.length === 0 ? (
         <p>기록이 없습니다.</p>
       ) : (
@@ -75,6 +87,9 @@ const FoodLogList: React.FC<Props> = ({ refreshTrigger }) => {
             <tr style={{ background: "#f5f5f5" }}>
               <th style={th}>음식 이름</th>
               <th style={th}>칼로리</th>
+              <th style={th}>탄수화물(g)</th>
+              <th style={th}>단백질(g)</th>
+              <th style={th}>지방(g)</th>
               <th style={th}>식사 유형</th>
               <th style={th}>기록 시간</th>
             </tr>
@@ -84,6 +99,9 @@ const FoodLogList: React.FC<Props> = ({ refreshTrigger }) => {
               <tr key={log.id}>
                 <td style={td}>{log.foodName}</td>
                 <td style={td}>{log.calories} kcal</td>
+                <td style={td}>{log.carbohydrate.toFixed(1)}</td>
+                <td style={td}>{log.protein.toFixed(1)}</td>
+                <td style={td}>{log.fat.toFixed(1)}</td>
                 <td style={td}>{log.mealType}</td>
                 <td style={td}>{new Date(log.loggedAt).toLocaleString("ko-KR")}</td>
               </tr>
@@ -112,6 +130,17 @@ const FoodLogList: React.FC<Props> = ({ refreshTrigger }) => {
       </div>
     </div>
   );
+};
+
+const summaryContainer: React.CSSProperties = {
+  display: "flex",
+  gap: "24px",
+  flexWrap: "wrap",
+  marginBottom: "12px",
+  padding: "8px 12px",
+  background: "#f0f4ff",
+  borderRadius: "6px",
+  fontSize: "14px",
 };
 
 const dateFilterContainer: React.CSSProperties = {

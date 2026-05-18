@@ -12,6 +12,9 @@ const FoodLogForm: React.FC<Props> = ({ onSuccess }) => {
     foodName: "",
     calories: 0,
     mealType: "LUNCH",
+    carbohydrate: 0,
+    protein: 0,
+    fat: 0,
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -36,13 +39,21 @@ const FoodLogForm: React.FC<Props> = ({ onSuccess }) => {
 
   // ─── Handlers ─────────────────────────────────────────────
 
-  // calories, mealType 등 일반 필드 변경
+  // calories, mealType, 영양소 등 일반 필드 변경
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setForm((prev) => ({
-      ...prev,
-      [name]: name === "calories" ? Number(value) : value,
-    }));
+    const numericFields = ["calories", "carbohydrate", "protein", "fat"];
+    if (name === "mealType") {
+      setForm((prev) => ({
+        ...prev,
+        mealType: value as FoodLogRequest["mealType"],
+      }));
+    } else {
+      setForm((prev) => ({
+        ...prev,
+        [name]: numericFields.includes(name) ? Number(value) : value,
+      }));
+    }
   };
 
   // foodName 전용 핸들러 (debounce + 자동완성)
@@ -97,12 +108,27 @@ const FoodLogForm: React.FC<Props> = ({ onSuccess }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // 클라이언트 validation
+    if (!form.foodName.trim()) {
+      setError("음식 이름을 입력해주세요.");
+      return;
+    }
+    if (form.calories < 0) {
+      setError("칼로리는 0 이상이어야 합니다.");
+      return;
+    }
+    if (form.carbohydrate < 0 || form.protein < 0 || form.fat < 0) {
+      setError("영양소 값은 0 이상이어야 합니다.");
+      return;
+    }
+
     setLoading(true);
     setError(null);
 
     try {
       await addFoodLog(form);
-      setForm({ foodName: "", calories: 0, mealType: "LUNCH" });
+      setForm({ foodName: "", calories: 0, mealType: "LUNCH", carbohydrate: 0, protein: 0, fat: 0 });
       setSuggestions([]);
       setShowDropdown(false);
       onSuccess();
@@ -182,6 +208,45 @@ const FoodLogForm: React.FC<Props> = ({ onSuccess }) => {
             <option key={t} value={t}>{t}</option>
           ))}
         </select>
+      </div>
+
+      {/* 탄수화물 */}
+      <div style={{ marginTop: 8 }}>
+        <label>탄수화물(g): </label>
+        <input
+          name="carbohydrate"
+          type="number"
+          min={0}
+          step={0.1}
+          value={form.carbohydrate}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* 단백질 */}
+      <div style={{ marginTop: 8 }}>
+        <label>단백질(g): </label>
+        <input
+          name="protein"
+          type="number"
+          min={0}
+          step={0.1}
+          value={form.protein}
+          onChange={handleChange}
+        />
+      </div>
+
+      {/* 지방 */}
+      <div style={{ marginTop: 8 }}>
+        <label>지방(g): </label>
+        <input
+          name="fat"
+          type="number"
+          min={0}
+          step={0.1}
+          value={form.fat}
+          onChange={handleChange}
+        />
       </div>
 
       <button onClick={handleSubmit} disabled={loading} style={{ marginTop: 12 }}>
